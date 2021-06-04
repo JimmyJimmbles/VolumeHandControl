@@ -4,6 +4,7 @@ import numpy as np
 import modules.HandTrackingModule as htm
 import math
 import osascript
+from subprocess import call
 
 # Video Capture
 cap = cv2.VideoCapture(0)
@@ -42,9 +43,12 @@ while True:
 
     # The mapped volume
     vol = np.interp(length, [60, 300], [int(min_volume), int(max_volume)])
+
     print(vol)
 
-    osascript.osascript("set volume output volume {}".format(vol))
+    call(["osascript -e 'set volume output volume {}'".format(vol)], shell=True)
+
+    # osascript.osascript("set volume output volume {}".format(vol))
 
     # Show green dot 
     if length < 60:
