@@ -3,7 +3,6 @@ import time
 import numpy as np
 from modules.WebcamVideoStream import WebcamVideoStream
 from modules.HandTrackingModule import HandDetector
-import math
 from Foundation import NSAppleScript
 
 # Video Capture
