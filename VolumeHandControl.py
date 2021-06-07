@@ -5,6 +5,19 @@ from modules.WebcamVideoStream import WebcamVideoStream
 from modules.HandTrackingModule import HandDetector
 from Foundation import NSAppleScript
 
+
+def current_volume():
+  # Get current volume
+  s = NSAppleScript.alloc().initWithSource_('output volume of (get volume settings)')
+  result, error_info = s.executeAndReturnError_(None)
+  vol = int(result.stringValue())
+
+  return vol
+
+# Colors
+light_blue = (201, 194, 117)
+green = (144, 245, 66)
+
 # Video Capture
 wvs = WebcamVideoStream().start()
 
@@ -17,7 +30,7 @@ max_volume = 100
 area = 0
 
 # HandDetector Object
-detector = HandDetector(detection_confidence=0.7, max_hands=1)
+detector = HandDetector(max_hands=1, detection_confidence=0.7)
 setVol = True
 
 while True:
@@ -28,15 +41,8 @@ while True:
   frame = detector.find_hands(frame)
   lm_list, bb = detector.find_position(frame )
 
-  # Set fps
-  curr_time = time.time()
-  fps = 1 / (curr_time - prev_time)
-  prev_time = curr_time
-
   # Get current volume
-  s = NSAppleScript.alloc().initWithSource_('output volume of (get volume settings)')
-  result, error_info = s.executeAndReturnError_(None)
-  vol = int(result.stringValue())
+  vol = current_volume()
 
   if len(lm_list) != 0:
     # Filter based on area
@@ -62,14 +68,23 @@ while True:
         s.executeAndReturnError_(None)
         
         # Show green dot 
-        cv2.circle(frame, (data[4], data[5]), 15, (144, 245, 66), cv2.FILLED)
+        cv2.circle(frame, (data[4], data[5]), 15, green, cv2.FILLED)
 
+      # Display volume bar
+      cv2.rectangle(frame, (75, (400 - (2 * vol))), (10, 400), light_blue, cv2.FILLED)
+      cv2.putText(frame, 'Vol: {} %'.format(vol), (10, 440), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, light_blue, 2)
 
-    # Display volume bar
-    cv2.rectangle(frame, (75, (400 - (2 * vol))), (10, 400), (201, 194, 117), cv2.FILLED)
-    cv2.putText(frame, 'Vol: {} %'.format(vol), (10, 440), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (201, 194, 117), 2)
-    cv2.putText(frame, f'FPS: {int(fps)}', (10, 70), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (201, 194, 117), 2)
-    print("vol: {} fps: {}".format(vol, int(fps)))
+  # Set fps
+  curr_time = time.time()
+  fps = 1 / (curr_time - prev_time)
+  prev_time = curr_time
 
+  print("vol: {} fps: {}".format(vol, int(fps)))
+
+  cv2.putText(frame, f'FPS: {int(fps)}', (10, 70), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, green, 2)
+  # Get current volume
+  curr_vol = current_volume()
+  cv2.putText(frame, f'Set Volume: {int(curr_vol)}', (400, 50), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, light_blue, 2)
+  
   cv2.imshow("frame", frame)
   cv2.waitKey(1) & 0xFF
